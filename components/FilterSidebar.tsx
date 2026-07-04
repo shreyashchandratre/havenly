@@ -4,15 +4,36 @@ import { useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FilterParams, FILTER_DEFAULTS } from '@/hooks/use-filter-params';
 
 interface FilterSidebarProps {
   onClose?: () => void;
   isOpen?: boolean;
+  /** Current filter state — driven by useFilterParams in the parent */
+  filters: FilterParams;
+  /** Called with a partial update whenever the user changes a filter */
+  onFiltersChange: (partial: Partial<FilterParams>) => void;
 }
 
-export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 500 });
-  const [minRating, setMinRating] = useState(0);
+const propertyTypes = [
+  { id: 'entire', label: 'Entire Place' },
+  { id: 'room', label: 'Room' },
+  { id: 'shared', label: 'Shared Room' },
+];
+
+const ratings = [
+  { value: 4.5, label: '4.5+ (Excellent)' },
+  { value: 4.0, label: '4.0+ (Very Good)' },
+  { value: 3.5, label: '3.5+ (Good)' },
+];
+
+export function FilterSidebar({
+  onClose,
+  isOpen = true,
+  filters,
+  onFiltersChange,
+}: FilterSidebarProps) {
+  // UI-only state — just controls accordion open/closed; not part of filter state
   const [expandedFilters, setExpandedFilters] = useState({
     price: true,
     rating: true,
@@ -20,23 +41,32 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
   });
 
   const toggleFilter = (filter: keyof typeof expandedFilters) => {
-    setExpandedFilters((prev) => ({
-      ...prev,
-      [filter]: !prev[filter],
-    }));
+    setExpandedFilters((prev) => ({ ...prev, [filter]: !prev[filter] }));
   };
 
-  const propertyTypes = [
-    { id: 'entire', label: 'Entire Place' },
-    { id: 'room', label: 'Room' },
-    { id: 'shared', label: 'Shared Room' },
-  ];
+  const handleMinPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value);
+    if (!isNaN(val)) onFiltersChange({ minPrice: Math.max(0, val) });
+  };
 
-  const ratings = [
-    { value: 4.5, label: '4.5+ (Excellent)' },
-    { value: 4.0, label: '4.0+ (Very Good)' },
-    { value: 3.5, label: '3.5+ (Good)' },
-  ];
+  const handleMaxPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value);
+    if (!isNaN(val)) onFiltersChange({ maxPrice: Math.min(10000, val) });
+  };
+
+  const handlePropertyType = (typeId: string) => {
+    // Toggle: selecting the same type again clears it
+    onFiltersChange({ propertyType: filters.propertyType === typeId ? '' : typeId });
+  };
+
+  const handleClearAll = () => {
+    onFiltersChange({
+      minPrice: FILTER_DEFAULTS.minPrice,
+      maxPrice: FILTER_DEFAULTS.maxPrice,
+      rating: FILTER_DEFAULTS.rating,
+      propertyType: FILTER_DEFAULTS.propertyType,
+    });
+  };
 
   return (
     <>
@@ -75,9 +105,7 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
             <span>Price Range</span>
             <ChevronDown
               size={20}
-              className={`transition-transform ${
-                expandedFilters.price ? 'rotate-180' : ''
-              }`}
+              className={`transition-transform ${expandedFilters.price ? 'rotate-180' : ''}`}
             />
           </button>
 
@@ -91,10 +119,10 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
                   <span className="text-sm">$</span>
                   <Input
                     type="number"
-                    value={priceRange.min}
-                    onChange={(e) =>
-                      setPriceRange({ ...priceRange, min: parseInt(e.target.value) })
-                    }
+                    value={filters.minPrice}
+                    onChange={handleMinPrice}
+                    min={0}
+                    max={10000}
                     className="h-9"
                   />
                 </div>
@@ -108,10 +136,10 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
                   <span className="text-sm">$</span>
                   <Input
                     type="number"
-                    value={priceRange.max}
-                    onChange={(e) =>
-                      setPriceRange({ ...priceRange, max: parseInt(e.target.value) })
-                    }
+                    value={filters.maxPrice}
+                    onChange={handleMaxPrice}
+                    min={0}
+                    max={10000}
                     className="h-9"
                   />
                 </div>
@@ -121,11 +149,12 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
                 type="range"
                 min="0"
                 max="1000"
-                value={priceRange.max}
+                value={filters.maxPrice}
                 onChange={(e) =>
-                  setPriceRange({ ...priceRange, max: parseInt(e.target.value) })
+                  onFiltersChange({ maxPrice: parseInt(e.target.value) })
                 }
                 className="w-full accent-primary"
+                aria-label="Maximum price slider"
               />
             </div>
           )}
@@ -140,25 +169,23 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
             <span>Rating</span>
             <ChevronDown
               size={20}
-              className={`transition-transform ${
-                expandedFilters.rating ? 'rotate-180' : ''
-              }`}
+              className={`transition-transform ${expandedFilters.rating ? 'rotate-180' : ''}`}
             />
           </button>
 
           {expandedFilters.rating && (
             <div className="mt-4 space-y-2">
-              {ratings.map((rating) => (
-                <label key={rating.value} className="flex items-center gap-3 cursor-pointer">
+              {ratings.map((r) => (
+                <label key={r.value} className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="radio"
                     name="rating"
-                    value={rating.value}
-                    checked={minRating === rating.value}
-                    onChange={() => setMinRating(rating.value)}
+                    value={r.value}
+                    checked={filters.rating === r.value}
+                    onChange={() => onFiltersChange({ rating: r.value })}
                     className="h-4 w-4 cursor-pointer accent-primary"
                   />
-                  <span className="text-sm text-foreground">{rating.label}</span>
+                  <span className="text-sm text-foreground">{r.label}</span>
                 </label>
               ))}
             </div>
@@ -174,9 +201,7 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
             <span>Property Type</span>
             <ChevronDown
               size={20}
-              className={`transition-transform ${
-                expandedFilters.type ? 'rotate-180' : ''
-              }`}
+              className={`transition-transform ${expandedFilters.type ? 'rotate-180' : ''}`}
             />
           </button>
 
@@ -186,6 +211,8 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
                 <label key={type.id} className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
+                    checked={filters.propertyType === type.id}
+                    onChange={() => handlePropertyType(type.id)}
                     className="h-4 w-4 cursor-pointer accent-primary rounded"
                   />
                   <span className="text-sm text-foreground">{type.label}</span>
@@ -196,14 +223,7 @@ export function FilterSidebar({ onClose, isOpen = true }: FilterSidebarProps) {
         </div>
 
         {/* Clear Filters Button */}
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => {
-            setPriceRange({ min: 0, max: 500 });
-            setMinRating(0);
-          }}
-        >
+        <Button variant="outline" className="w-full" onClick={handleClearAll}>
           Clear All
         </Button>
       </aside>

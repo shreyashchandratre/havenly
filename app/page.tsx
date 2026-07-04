@@ -8,7 +8,8 @@ import { Property, bookings } from '@/lib/dummy-data';
 import { getStoredProperties } from '@/lib/properties';
 import { Footer } from "@/components/Footer";
 import { Button } from '@/components/ui/button';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useFilterParams } from '@/hooks/use-filter-params';
 import Image from 'next/image';
 
 interface PropertySectionProps {
@@ -112,9 +113,8 @@ export default function HomePage() {
 }
 
 function Home() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const { filters, setFilters, clearFilters } = useFilterParams();
   const [propertyList, setPropertyList] = useState<Property[]>(getStoredProperties());
 
   useEffect(() => {
@@ -138,7 +138,7 @@ function Home() {
   // Filter properties
   const filtered = propertyList.filter((property) => {
     // 1. Category Filter
-    if (selectedCategory && property.category !== selectedCategory) {
+    if (filters.category && property.category !== filters.category) {
       return false;
     }
 
@@ -177,27 +177,22 @@ function Home() {
   });
 
   const isFilterActive = Boolean(
-    selectedCategory ||
+    filters.category ||
     city ||
     checkInStr ||
     checkOutStr ||
     guests > 0
   );
 
-  const handleClearFilters = () => {
-    setSelectedCategory(undefined);
-    router.push('/');
-  };
-
   return (
     <main className="min-h-screen bg-background">
       {/* Navbar */}
       <Navbar />
 
-      {/* Category Filter */}
+      {/* Category Filter — synced to URL via useFilterParams */}
       <CategoryFilter
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        selectedCategory={filters.category || undefined}
+        onCategoryChange={(category) => setFilters({ category })}
       />
 
       {/* Properties Sections */}
@@ -216,7 +211,7 @@ function Home() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={handleClearFilters}
+                  onClick={clearFilters}
                   className="rounded-full text-sm font-semibold hover:bg-muted"
                 >
                   Clear Filters
