@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from 'next-themes' // 1. Import the provider
 import './globals.css'
+import { AppLocaleProvider } from './locale-provider'
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +23,8 @@ export default function RootLayout({
       <body className={`${inter.className} font-sans antialiased`} style={{ letterSpacing: '-0.01em' }}>
         {/* 2. Wrap children with the ThemeProvider */}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          {/* Global locale/currency provider (client-side) */}
+          <AppLocaleProvider>{children}</AppLocaleProvider>
         </ThemeProvider>
         
         {process.env.NODE_ENV === 'production' && <Analytics />}
