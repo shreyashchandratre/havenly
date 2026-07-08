@@ -108,6 +108,11 @@ const DESTINATIONS_BY_TAB: Record<TabName, Destination[]> = {
 
 export function Footer() {
   const [activeTab, setActiveTab] = useState<TabName>('Popular');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const VISIBLE_COUNT = 6;
+  const destinations = DESTINATIONS_BY_TAB[activeTab];
+  const visibleDestinations = isExpanded ? destinations : destinations.slice(0, VISIBLE_COUNT);
 
   return (
     <footer className="bg-background border-t border-border pt-12 pb-8">
@@ -120,7 +125,10 @@ export function Footer() {
             {TAB_NAMES.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setIsExpanded(false);
+                }}
                 className={`pb-4 text-sm font-medium transition-colors whitespace-nowrap ${
                   tab === activeTab
                     ? 'border-b-2 border-foreground text-foreground'
@@ -133,17 +141,40 @@ export function Footer() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-y-6 gap-x-4">
-            {DESTINATIONS_BY_TAB[activeTab].map((loc) => (
+            {visibleDestinations.map((loc) => (
               <div key={loc.name} className="cursor-pointer group">
                 <div className="text-sm font-medium text-foreground group-hover:text-muted-foreground">{loc.name}</div>
                 <div className="text-sm text-muted-foreground">{loc.sub}</div>
               </div>
             ))}
-            <div className="flex items-center gap-1 text-sm font-semibold text-foreground cursor-pointer hover:underline">
-              Show more <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-            </div>
+
+            {destinations.length > VISIBLE_COUNT && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded((v) => !v)}
+                aria-expanded={isExpanded ? 'true' : 'false'}
+                className="flex items-center gap-1 text-sm font-semibold text-foreground cursor-pointer hover:underline"
+              >
+                {isExpanded ? 'Show less' : 'Show more'}{' '}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={isExpanded ? 'rotate-180 transition-transform' : ''}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
+
 
         <hr className="border-border mb-12" />
 
