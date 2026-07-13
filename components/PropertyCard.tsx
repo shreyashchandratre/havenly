@@ -159,7 +159,8 @@ export function PropertyCard({
               isCompact ? 'text-sm' : 'text-[15px]'
             }`}
           >
-              <PropertyPrice property={property} />
+              <PropertyPriceText property={property} />
+
 
             <span className="mx-1.5 font-bold">·</span>
 
