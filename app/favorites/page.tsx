@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PropertyCard, getFavoriteIds } from '@/components/PropertyCard';
+import { PropertyCard } from '@/components/PropertyCard';
+import { getFavoriteIds } from '@/hooks/useFavorite';
 import { Property } from '@/lib/dummy-data';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';

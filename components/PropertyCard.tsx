@@ -9,83 +9,20 @@ import type { Property } from '@/lib/dummy-data';
 import { PropertyPriceText } from '@/components/PriceText';
 
 
+import { useFavorite } from '@/hooks/useFavorite';
+
 interface PropertyCardProps {
   property: Property;
   variant?: 'default' | 'compact';
   priority?: boolean;
 }
 
-// Favorites are stored as an array of property IDs only (not full objects).
-// This prevents stale data when a listing is edited after being favorited.
-// The Favorites page looks up current property data by ID at render time.
-
-export const getFavoriteIds = (): string[] => {
-  if (typeof window === 'undefined') return [];
-
-  try {
-    return JSON.parse(localStorage.getItem('favorites') || '[]');
-  } catch {
-    return [];
-  }
-};
-
-// Kept for backward compatibility — returns Property[] by looking up IDs against allProperties.
-export const getFavorites = (allProperties: Property[]): Property[] => {
-  const ids = getFavoriteIds();
-  return allProperties.filter((p) => ids.includes(p.id));
-};
-
-const saveFavoriteIds = (ids: string[]) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('favorites', JSON.stringify(ids));
-};
-
 export function PropertyCard({
   property,
   variant = 'default',
   priority = false,
 }: PropertyCardProps) {
-  const [isSaved, setIsSaved] = useState(false);
-
-  const syncFavoriteStatus = useCallback(() => {
-    const ids = getFavoriteIds();
-    setIsSaved(ids.includes(property.id));
-  }, [property.id]);
-
-  useEffect(() => {
-    syncFavoriteStatus();
-
-    const handleUpdate = () => {
-      syncFavoriteStatus();
-    };
-
-    window.addEventListener('storage', handleUpdate);
-    window.addEventListener('favoritesUpdated', handleUpdate);
-
-    return () => {
-      window.removeEventListener('storage', handleUpdate);
-      window.removeEventListener('favoritesUpdated', handleUpdate);
-    };
-  }, [syncFavoriteStatus]);
-
-  const handleSave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const ids = getFavoriteIds();
-
-    if (isSaved) {
-      saveFavoriteIds(ids.filter((id) => id !== property.id));
-      setIsSaved(false);
-    } else {
-      if (!ids.includes(property.id)) {
-        saveFavoriteIds([...ids, property.id]);
-      }
-      setIsSaved(true);
-    }
-
-    window.dispatchEvent(new Event('favoritesUpdated'));
-  };
+  const { isSaved, toggleFavorite } = useFavorite(property.id);
 
   const isGuestFavourite =
     property.rating >= 4.8 || property.reviewCount >= 100;
@@ -127,7 +64,7 @@ export function PropertyCard({
           {/* Favorite Button */}
           <button
             type="button"
-            onClick={handleSave}
+            onClick={toggleFavorite}
             aria-label={
               isSaved ? 'Remove from favorites' : 'Save property'
             }

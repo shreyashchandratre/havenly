@@ -14,7 +14,8 @@ vi.mock('lucide-react', () => ({
   Star: () => null,
 }));
 
-import { getFavorites, getFavoriteIds } from '../PropertyCard';
+import { PropertyCard } from '../PropertyCard';
+import { getFavorites, getFavoriteIds } from '../../hooks/useFavorite';
 import { Property } from '@/lib/dummy-data';
 
 // Mock localStorage in global scope

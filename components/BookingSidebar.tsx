@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { Calendar, Users, Star, Share2, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Property } from '@/lib/dummy-data';
+import { Property, Booking, currentUser } from '@/lib/dummy-data';
 import { useToast } from '@/hooks/use-toast';
-import { useLocale } from '@/lib/use-locale';
-import { convertPrice, formatCurrency, getLocaleForLanguage } from '@/lib/locale-currency';
+
 
 interface BookingSidebarProps {
   property: Property;
@@ -16,9 +15,12 @@ interface BookingSidebarProps {
 export function BookingSidebar({ property }: BookingSidebarProps) {
   const [guests, setGuests] = useState(1);
   const { toast } = useToast();
+  const router = useRouter();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
+  const { isSaved, toggleFavorite } = useFavorite(property.id);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -47,6 +49,40 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
   const cleaningFeeInINR = 50 * 83; // $50 -> ₹ (approx) to keep consistent with USD-based demo
   const cleaningFeeConverted = convertPrice(cleaningFeeInINR, settings.currency);
   const grandTotalConverted = totalPriceConverted + cleaningFeeConverted;
+
+  const handleBooking = async () => {
+    setIsSubmitting(true);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const newBooking: Booking = {
+      id: `booking-${Date.now()}`,
+      propertyId: property.id,
+      guestId: currentUser.id,
+      checkIn: new Date(checkIn),
+      checkOut: new Date(checkOut),
+      guests,
+      totalPrice: totalPrice + 50,
+      status: 'upcoming',
+      createdAt: new Date(),
+    };
+
+    const existing = localStorage.getItem('havenly-bookings');
+    const parsed = existing ? JSON.parse(existing) : [];
+    parsed.push(newBooking);
+    localStorage.setItem('havenly-bookings', JSON.stringify(parsed));
+
+    setIsSubmitting(false);
+    setShowConfirm(false);
+    
+    toast({
+      title: "Booking confirmed!",
+      description: "You can view your reservation in the dashboard.",
+    });
+
+    router.push('/dashboard');
+  };
 
   return (
     <Card className="p-6 border-border sticky top-24 space-y-6">
@@ -147,7 +183,8 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
       {/* Reserve Button */}
       <Button
         className="w-full bg-primary text-primary-foreground py-3 text-base font-semibold hover:opacity-90 transition"
-        disabled={isInvalidRange}
+        disabled={isInvalidRange || nights <= 0}
+        onClick={() => setShowConfirm(true)}
       >
         Reserve
       </Button>
@@ -196,7 +233,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => setIsSaved(!isSaved)}
+          onClick={toggleFavorite}
         >
           <Heart
             size={16}
@@ -205,6 +242,31 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
           Save
         </Button>
       </div>
+
+      {/* Booking Confirmation Dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm your booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to book {property.title} for {nights} night(s) from {checkIn} to {checkOut} for {guests} guest(s).
+              The total price is ${totalPrice + 50}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault(); // keep dialog open while processing
+                handleBooking();
+              }} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Confirming...' : 'Confirm Reservation'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
