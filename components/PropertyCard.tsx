@@ -161,7 +161,6 @@ export function PropertyCard({
           >
               <PropertyPriceText property={property} />
 
-
             <span className="mx-1.5 font-bold">·</span>
 
             <span className="flex items-center gap-1">
