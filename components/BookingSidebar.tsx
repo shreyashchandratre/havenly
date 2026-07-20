@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Property, Booking, currentUser } from '@/lib/dummy-data';
 import { useToast } from '@/hooks/use-toast';
+import { useFavorite } from '@/hooks/useFavorite';
 import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -28,7 +29,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
   const router = useRouter();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
+  const { isSaved, toggleFavorite } = useFavorite(property.id);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -229,7 +230,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => setIsSaved(!isSaved)}
+          onClick={toggleFavorite}
         >
           <Heart
             size={16}
