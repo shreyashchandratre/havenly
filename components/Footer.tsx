@@ -1,6 +1,119 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { LocaleCurrencyButton } from '@/components/LocaleCurrencyButton';
+type Destination = {
+  name: string;
+  sub: string;
+};
+
+const TAB_NAMES = [
+  'Popular',
+  'Arts & culture',
+  'Beach',
+  'Mountains',
+  'Outdoors',
+  'Things to do',
+] as const;
+
+type TabName = (typeof TAB_NAMES)[number];
+
+const DESTINATIONS_BY_TAB: Record<TabName, Destination[]> = {
+  Popular: [
+    { name: 'Canmore', sub: 'Apartment rentals' },
+    { name: 'Benalmádena', sub: 'Apartment rentals' },
+    { name: 'Marbella', sub: 'Apartment rentals' },
+    { name: 'Mijas', sub: 'House rentals' },
+    { name: 'Prescott', sub: 'Pet-friendly rentals' },
+    { name: 'Scottsdale', sub: 'Apartment rentals' },
+    { name: 'Tucson', sub: 'Pet-friendly rentals' },
+    { name: 'Jasper', sub: 'Cabin rentals' },
+    { name: 'Mountain View', sub: 'Family-friendly rentals' },
+    { name: 'Devonport', sub: 'Cottage rentals' },
+    { name: 'Mallacoota', sub: 'Pet-friendly rentals' },
+    { name: 'Ibiza', sub: 'Holiday rentals' },
+  ],
+  'Arts & culture': [
+    { name: 'Florence', sub: 'Apartment rentals' },
+    { name: 'Kyoto', sub: 'House rentals' },
+    { name: 'Vienna', sub: 'Apartment rentals' },
+    { name: 'Oaxaca', sub: 'Villa rentals' },
+    { name: 'Marrakech', sub: 'Riad rentals' },
+    { name: 'Edinburgh', sub: 'Cottage rentals' },
+    { name: 'Prague', sub: 'Apartment rentals' },
+    { name: 'Cairo', sub: 'Apartment rentals' },
+    { name: 'Rome', sub: 'House rentals' },
+    { name: 'Athens', sub: 'Apartment rentals' },
+    { name: 'Cusco', sub: 'House rentals' },
+    { name: 'Seville', sub: 'Apartment rentals' },
+  ],
+  Beach: [
+    { name: 'Cancun', sub: 'Beachfront rentals' },
+    { name: 'Bali', sub: 'Villa rentals' },
+    { name: 'Gold Coast', sub: 'Apartment rentals' },
+    { name: 'Phuket', sub: 'Beachfront rentals' },
+    { name: 'Zanzibar', sub: 'Beach hut rentals' },
+    { name: 'Malibu', sub: 'House rentals' },
+    { name: 'Santorini', sub: 'Villa rentals' },
+    { name: 'Goa', sub: 'Beachfront rentals' },
+    { name: 'Nice', sub: 'Apartment rentals' },
+    { name: 'Maui', sub: 'Beach house rentals' },
+    { name: 'Byron Bay', sub: 'Beachfront rentals' },
+    { name: 'Positano', sub: 'Villa rentals' },
+  ],
+  Mountains: [
+    { name: 'Aspen', sub: 'Cabin rentals' },
+    { name: 'Banff', sub: 'Chalet rentals' },
+    { name: 'Chamonix', sub: 'Chalet rentals' },
+    { name: 'Queenstown', sub: 'Cabin rentals' },
+    { name: 'Zermatt', sub: 'Chalet rentals' },
+    { name: 'Whistler', sub: 'Cabin rentals' },
+    { name: 'Interlaken', sub: 'Chalet rentals' },
+    { name: 'Boulder', sub: 'House rentals' },
+    { name: 'Lake Tahoe', sub: 'Cabin rentals' },
+    { name: 'Innsbruck', sub: 'Chalet rentals' },
+    { name: 'Snowdonia', sub: 'Cottage rentals' },
+    { name: 'Manali', sub: 'Cabin rentals' },
+  ],
+  Outdoors: [
+    { name: 'Moab', sub: 'Cabin rentals' },
+    { name: 'Yosemite Valley', sub: 'Cabin rentals' },
+    { name: 'Queenstown', sub: 'House rentals' },
+    { name: 'Torres del Paine', sub: 'Lodge rentals' },
+    { name: 'Kruger', sub: 'Safari lodge rentals' },
+    { name: 'Sedona', sub: 'House rentals' },
+    { name: 'Fiordland', sub: 'Cabin rentals' },
+    { name: 'Jackson Hole', sub: 'Cabin rentals' },
+    { name: 'Blue Mountains', sub: 'Cottage rentals' },
+    { name: 'Lake District', sub: 'Cottage rentals' },
+    { name: 'Costa Rica', sub: 'Eco-lodge rentals' },
+    { name: 'Patagonia', sub: 'Lodge rentals' },
+  ],
+  'Things to do': [
+    { name: 'New York', sub: 'Apartment rentals' },
+    { name: 'London', sub: 'Apartment rentals' },
+    { name: 'Tokyo', sub: 'Apartment rentals' },
+    { name: 'Paris', sub: 'Apartment rentals' },
+    { name: 'Singapore', sub: 'Apartment rentals' },
+    { name: 'Barcelona', sub: 'Apartment rentals' },
+    { name: 'Berlin', sub: 'Apartment rentals' },
+    { name: 'Sydney', sub: 'Apartment rentals' },
+    { name: 'Dubai', sub: 'Apartment rentals' },
+    { name: 'Amsterdam', sub: 'Apartment rentals' },
+    { name: 'Bangkok', sub: 'Apartment rentals' },
+    { name: 'Toronto', sub: 'Apartment rentals' },
+  ],
+};
 
 export function Footer() {
+  const [activeTab, setActiveTab] = useState<TabName>('Popular');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const VISIBLE_COUNT = 6;
+  const destinations = DESTINATIONS_BY_TAB[activeTab];
+  const visibleDestinations = isExpanded ? destinations : destinations.slice(0, VISIBLE_COUNT);
+
   return (
     <footer className="bg-background border-t border-border pt-12 pb-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -9,38 +122,59 @@ export function Footer() {
         <div className="mb-12">
           <h2 className="text-[22px] font-semibold text-foreground mb-4">Inspiration for future getaways</h2>
           <div className="flex gap-6 border-b border-border overflow-x-auto hide-scrollbar mb-8">
-            {['Popular', 'Arts & culture', 'Beach', 'Mountains', 'Outdoors', 'Things to do'].map((tab, i) => (
-              <button key={tab} className={`pb-4 text-sm font-medium transition-colors whitespace-nowrap ${i === 0 ? 'border-b-2 border-foreground text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+            {TAB_NAMES.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setIsExpanded(false);
+                }}
+                className={`pb-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                  tab === activeTab
+                    ? 'border-b-2 border-foreground text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
                 {tab}
               </button>
             ))}
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-y-6 gap-x-4">
-            {[
-              { name: 'Canmore', sub: 'Apartment rentals' },
-              { name: 'Benalmádena', sub: 'Apartment rentals' },
-              { name: 'Marbella', sub: 'Apartment rentals' },
-              { name: 'Mijas', sub: 'House rentals' },
-              { name: 'Prescott', sub: 'Pet-friendly rentals' },
-              { name: 'Scottsdale', sub: 'Apartment rentals' },
-              { name: 'Tucson', sub: 'Pet-friendly rentals' },
-              { name: 'Jasper', sub: 'Cabin rentals' },
-              { name: 'Mountain View', sub: 'Family-friendly rentals' },
-              { name: 'Devonport', sub: 'Cottage rentals' },
-              { name: 'Mallacoota', sub: 'Pet-friendly rentals' },
-              { name: 'Ibiza', sub: 'Holiday rentals' },
-            ].map((loc) => (
+            {visibleDestinations.map((loc) => (
               <div key={loc.name} className="cursor-pointer group">
                 <div className="text-sm font-medium text-foreground group-hover:text-muted-foreground">{loc.name}</div>
                 <div className="text-sm text-muted-foreground">{loc.sub}</div>
               </div>
             ))}
-            <div className="flex items-center gap-1 text-sm font-semibold text-foreground cursor-pointer hover:underline">
-              Show more <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-            </div>
+
+            {destinations.length > VISIBLE_COUNT && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded((v) => !v)}
+                aria-expanded={isExpanded ? 'true' : 'false'}
+                className="flex items-center gap-1 text-sm font-semibold text-foreground cursor-pointer hover:underline"
+              >
+                {isExpanded ? 'Show less' : 'Show more'}{' '}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={isExpanded ? 'rotate-180 transition-transform' : ''}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
+
 
         <hr className="border-border mb-12" />
 
@@ -150,13 +284,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-sm font-semibold text-foreground cursor-pointer">
-              <span className="flex items-center gap-2 hover:underline">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /><path d="M2 12h20" /></svg>
-                English (IN)
-              </span>
-              <span className="hover:underline">₹ INR</span>
-            </div>
+            <LocaleCurrencyButton />
             <div className="flex items-center gap-3">
               {/* Social Icons Placeholder */}
               <a href="#" aria-label="Facebook" className="text-foreground hover:opacity-80 transition"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg></a>

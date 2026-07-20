@@ -6,6 +6,8 @@ import { Heart, Star } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
 import type { Property } from '@/lib/dummy-data';
+import { PropertyPriceText } from '@/components/PriceText';
+
 
 import { useFavorite } from '@/hooks/useFavorite';
 
@@ -94,9 +96,7 @@ export function PropertyCard({
               isCompact ? 'text-sm' : 'text-[15px]'
             }`}
           >
-            <span className="text-foreground">
-              ₹{Math.round(property.pricePerNight*100).toLocaleString()} for 2 nights
-            </span>
+              <PropertyPriceText property={property} />
 
             <span className="mx-1.5 font-bold">·</span>
 
