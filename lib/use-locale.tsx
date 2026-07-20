@@ -1,0 +1,66 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { CurrencyCode, LanguageCode, LocaleSettings } from './locale-currency';
+
+const STORAGE_KEY = 'havenly-locale';
+
+const DEFAULT_SETTINGS: LocaleSettings = {
+  language: 'en-IN',
+  currency: 'INR',
+};
+
+type LocaleContextValue = {
+  settings: LocaleSettings;
+  setLanguage: (language: LanguageCode) => void;
+  setCurrency: (currency: CurrencyCode) => void;
+};
+
+const LocaleContext = createContext<LocaleContextValue | null>(null);
+
+function safeParseSettings(raw: string | null): LocaleSettings | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<LocaleSettings>;
+    if (!parsed.language || !parsed.currency) return null;
+    return {
+      language: parsed.language as LanguageCode,
+      currency: parsed.currency as CurrencyCode,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function LocaleProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<LocaleSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    const stored = safeParseSettings(localStorage.getItem(STORAGE_KEY));
+    if (stored) setSettings(stored);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
+
+  const value = useMemo<LocaleContextValue>(
+    () => ({
+      settings,
+      setLanguage: (language) => setSettings((s) => ({ ...s, language })),
+      setCurrency: (currency) => setSettings((s) => ({ ...s, currency })),
+    }),
+    [settings]
+  );
+
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+}
+
+export function useLocale() {
+  const ctx = useContext(LocaleContext);
+  if (!ctx) {
+    throw new Error('useLocale must be used within LocaleProvider');
+  }
+  return ctx;
+}
+

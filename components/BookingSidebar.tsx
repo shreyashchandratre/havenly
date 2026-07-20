@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Property } from '@/lib/dummy-data';
 import { useToast } from '@/hooks/use-toast';
+import { useLocale } from '@/lib/use-locale';
+import { convertPrice, formatCurrency, getLocaleForLanguage } from '@/lib/locale-currency';
 
 interface BookingSidebarProps {
   property: Property;
@@ -34,7 +36,17 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
 
   const isInvalidRange = Boolean(checkIn && checkOut && nights <= 0);
 
-  const totalPrice = nights * property.pricePerNight;
+  const { settings } = useLocale();
+  const locale = getLocaleForLanguage(settings.language);
+
+  // Base prices in this demo dataset are treated as INR.
+  const totalPriceInINR = nights * property.pricePerNight;
+
+  const pricePerNightConverted = convertPrice(property.pricePerNight, settings.currency);
+  const totalPriceConverted = convertPrice(totalPriceInINR, settings.currency);
+  const cleaningFeeInINR = 50 * 83; // $50 -> ₹ (approx) to keep consistent with USD-based demo
+  const cleaningFeeConverted = convertPrice(cleaningFeeInINR, settings.currency);
+  const grandTotalConverted = totalPriceConverted + cleaningFeeConverted;
 
   return (
     <Card className="p-6 border-border sticky top-24 space-y-6">
@@ -42,7 +54,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
       <div>
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-foreground">
-            ${property.pricePerNight}
+            {formatCurrency(pricePerNightConverted, settings.currency, locale)}
           </span>
           <span className="text-muted-foreground">per night</span>
         </div>
@@ -145,19 +157,23 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
         <div className="space-y-2 border-t border-border pt-6 text-sm">
           <div className="flex justify-between">
             <span className="text-foreground">
-              ${property.pricePerNight} × {nights} nights
+              {formatCurrency(pricePerNightConverted, settings.currency, locale)} × {nights} nights
             </span>
             <span className="font-semibold text-foreground">
-              ${property.pricePerNight * nights}
+              {formatCurrency(totalPriceConverted, settings.currency, locale)}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-foreground">Cleaning fee</span>
-            <span className="font-semibold text-foreground">$50</span>
+            <span className="font-semibold text-foreground">
+              {formatCurrency(cleaningFeeConverted, settings.currency, locale)}
+            </span>
           </div>
           <div className="flex justify-between border-t border-border pt-2">
             <span className="font-semibold text-foreground">Total</span>
-            <span className="font-bold text-foreground">${totalPrice + 50}</span>
+            <span className="font-bold text-foreground">
+              {formatCurrency(grandTotalConverted, settings.currency, locale)}
+            </span>
           </div>
         </div>
       )}
