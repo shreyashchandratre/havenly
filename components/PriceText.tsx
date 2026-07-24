@@ -32,6 +32,10 @@ export function PriceText({
 }
 
 export function PropertyPriceText({ property }: { property: Property }) {
-  return <PriceText propertyPricePerNightInINR={property.pricePerNight} label="for 2 nights" forNights={2} />;
+  return (
+    <span className="font-semibold text-foreground">
+      <PriceText propertyPricePerNightInINR={property.pricePerNight} />
+      <span className="text-sm font-normal text-muted-foreground"> / night</span>
+    </span>
+  );
 }
-
