@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ExpandedSearchBar } from './expanded-search-bar';
+import { useLocale } from '@/lib/use-locale'; // 1. Imported the new hook
 
 export function Navbar() {
   return (
@@ -44,6 +45,9 @@ function NavbarContent() {
   const [showSearch, setShowSearch] = useState(true);
   const lastScrollY = useRef(0);
   const pathname = usePathname();
+  
+  // 2. Extracted settings and setCurrency from our context
+  const { settings, setCurrency } = useLocale();
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
@@ -155,9 +159,16 @@ function NavbarContent() {
               </Link>
 
               <ThemeToggle />
-              <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
-                {/* Globe Icon */}
-              </Button>
+              
+              {/* 3. Replaced the empty Globe Icon with our dynamic Currency Dropdown */}
+              <select
+                value={settings.currency}
+                onChange={(e) => setCurrency(e.target.value as 'USD' | 'INR')}
+                className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer rounded-md px-2 py-1 hover:bg-muted"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="INR">INR (₹)</option>
+              </select>
 
               <Button variant="ghost" size="icon" className="rounded-full text-foreground hover:bg-muted">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /><path d="M2 12h20" /></svg>
@@ -236,6 +247,19 @@ function NavbarContent() {
               <div className="flex items-center justify-between px-4 py-2 mb-2">
                 <span className="text-foreground font-medium">Theme</span>
                 <ThemeToggle />
+              </div>
+
+              {/* 4. Added Currency selector to mobile view */}
+              <div className="flex items-center justify-between px-4 py-2 mb-2">
+                <span className="text-foreground font-medium">Currency</span>
+                <select
+                  value={settings.currency}
+                  onChange={(e) => setCurrency(e.target.value as 'USD' | 'INR')}
+                  className="bg-background border border-border text-sm font-medium text-foreground focus:outline-none rounded-md px-2 py-1"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="INR">INR (₹)</option>
+                </select>
               </div>
 
               <Link href="/dashboard" className="block">
