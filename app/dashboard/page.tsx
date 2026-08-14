@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { DashboardTabs } from '@/components/DashboardTabs';
 import { BookingCard } from '@/components/BookingCard';
-import { bookings, properties, currentUser, User } from '@/lib/dummy-data';
+import { properties, currentUser, User } from '@/lib/dummy-data';
+import { getStoredBookings } from '@/lib/bookings';
 import { Card } from '@/components/ui/card';
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { Footer } from '@/components/Footer';
@@ -12,7 +13,11 @@ import { Footer } from '@/components/Footer';
 export default function DashboardPage() {
   const [user, setUser] = useState<User>(currentUser);
   const [editOpen, setEditOpen] = useState(false);
-  const [bookingList, setBookingList] = useState(bookings);
+  const [bookingList, setBookingList] = useState<any[]>([]);
+
+  useEffect(() => {
+    setBookingList(getStoredBookings());
+  }, []);
 
   // Separate bookings by status
   const upcomingBookings = bookingList.filter((b) => b.status === 'upcoming' || b.status === 'confirmed');

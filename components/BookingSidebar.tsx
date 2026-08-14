@@ -1,26 +1,72 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Users, Star, Share2, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Property, Booking, currentUser } from '@/lib/dummy-data';
+import { saveStoredBooking } from '@/lib/bookings';
 import { useToast } from '@/hooks/use-toast';
-
+import { useFavorite } from '@/hooks/useFavorite';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useLocale } from '@/lib/use-locale';
+import { getLocaleForLanguage, formatCurrency, convertPrice } from '@/lib/locale-currency';
 
 interface BookingSidebarProps {
   property: Property;
 }
 
 export function BookingSidebar({ property }: BookingSidebarProps) {
-  const [guests, setGuests] = useState(1);
-  const { toast } = useToast();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const pathname = usePathname();
+
+  const [guests, setGuests] = useState(() => {
+    const parsed = parseInt(searchParams.get('guests') || '1');
+    return isNaN(parsed) ? 1 : parsed;
+  });
+  const [checkIn, setCheckIn] = useState(() => searchParams.get('checkIn') || '');
+  const [checkOut, setCheckOut] = useState(() => searchParams.get('checkOut') || '');
+  
+  const { toast } = useToast();
   const { isSaved, toggleFavorite } = useFavorite(property.id);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync state to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (guests > 1) {
+      params.set('guests', guests.toString());
+    } else {
+      params.delete('guests');
+    }
+
+    if (checkIn) {
+      params.set('checkIn', checkIn);
+    } else {
+      params.delete('checkIn');
+    }
+
+    if (checkOut) {
+      params.set('checkOut', checkOut);
+    } else {
+      params.delete('checkOut');
+    }
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [guests, checkIn, checkOut, pathname, router, searchParams]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -63,15 +109,12 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
       checkIn: new Date(checkIn),
       checkOut: new Date(checkOut),
       guests,
-      totalPrice: totalPrice + 50,
+      totalPrice: totalPriceInINR + cleaningFeeInINR,
       status: 'upcoming',
       createdAt: new Date(),
     };
 
-    const existing = localStorage.getItem('havenly-bookings');
-    const parsed = existing ? JSON.parse(existing) : [];
-    parsed.push(newBooking);
-    localStorage.setItem('havenly-bookings', JSON.stringify(parsed));
+    saveStoredBooking(newBooking);
 
     setIsSubmitting(false);
     setShowConfirm(false);
@@ -250,7 +293,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
             <AlertDialogTitle>Confirm your booking</AlertDialogTitle>
             <AlertDialogDescription>
               You are about to book {property.title} for {nights} night(s) from {checkIn} to {checkOut} for {guests} guest(s).
-              The total price is ${totalPrice + 50}.
+              The total price is {formatCurrency(grandTotalConverted, settings.currency, locale)}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
