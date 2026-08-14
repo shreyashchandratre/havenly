@@ -5,6 +5,7 @@ import { Calendar, Users, Star, Share2, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Property, Booking, currentUser } from '@/lib/dummy-data';
+import { saveStoredBooking } from '@/lib/bookings';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorite } from '@/hooks/useFavorite';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -17,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/alert-dialog';
 import { useLocale } from '@/lib/use-locale';
 import { getLocaleForLanguage, formatCurrency, convertPrice } from '@/lib/locale-currency';
 
@@ -113,10 +114,7 @@ export function BookingSidebar({ property }: BookingSidebarProps) {
       createdAt: new Date(),
     };
 
-    const existing = localStorage.getItem('havenly-bookings');
-    const parsed = existing ? JSON.parse(existing) : [];
-    parsed.push(newBooking);
-    localStorage.setItem('havenly-bookings', JSON.stringify(parsed));
+    saveStoredBooking(newBooking);
 
     setIsSubmitting(false);
     setShowConfirm(false);

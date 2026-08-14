@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, Suspense } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PropertyCard } from '@/components/PropertyCard';
 import { CategoryFilter } from '@/components/CategoryFilter';
-import { Property, bookings } from '@/lib/dummy-data';
+import { Property } from '@/lib/dummy-data';
+import { getStoredBookings } from '@/lib/bookings';
 import { getStoredProperties } from '@/lib/properties';
 import { Footer } from "@/components/Footer";
 import { Button } from '@/components/ui/button';
@@ -158,8 +159,8 @@ function Home() {
       const reqOut = new Date(checkOutStr);
 
       if (reqIn instanceof Date && !isNaN(reqIn.getTime()) && reqOut instanceof Date && !isNaN(reqOut.getTime())) {
-        // Let's check overlap with existing bookings of this property
-        const propertyBookings = bookings.filter(
+        const allBookings = getStoredBookings();
+        const propertyBookings = allBookings.filter(
           (b) => b.propertyId === property.id && b.status !== 'cancelled'
         );
         for (const booking of propertyBookings) {

@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Property, bookings, Booking } from '@/lib/dummy-data';
-import { Edit, Trash2, Plus, Eye, Calendar, Users } from 'lucide-react';
+import { Property, Booking } from '@/lib/dummy-data';
+import { getStoredBookings, saveStoredBooking } from '@/lib/bookings';
 import { getStoredProperties, deleteStoredProperty } from '@/lib/properties';
 import { useToast } from '@/hooks/use-toast';
 import { Footer } from '@/components/Footer';
@@ -36,8 +36,9 @@ export default function HostDashboardPage() {
       const filtered = allProps.filter((p) => p.hostId === currentHostId);
       setHostProperties(filtered);
 
+      const allBookings = getStoredBookings();
       setHostBookings(
-        bookings.filter((booking) =>
+        allBookings.filter((booking) =>
           filtered.some((property) => property.id === booking.propertyId)
         )
       );
@@ -65,11 +66,14 @@ export default function HostDashboardPage() {
 
 
   const handleAccept = (bookingId : string) => {
-    setHostBookings((prev) => 
-      prev.map((booking) => 
-        booking.id === bookingId? { ...booking, status: "confirmed" } : booking
-      )
-    );
+    setHostBookings((prev) => {
+      const updated = prev.map((booking) => 
+        booking.id === bookingId? { ...booking, status: "confirmed" } as Booking : booking
+      );
+      const accepted = updated.find(b => b.id === bookingId);
+      if (accepted) saveStoredBooking(accepted);
+      return updated;
+    });
     toast({
       title: "Booking accepted",
       description: "Booking request has been accepted.",
@@ -77,11 +81,14 @@ export default function HostDashboardPage() {
   }
 
   const handleDecline = (bookingId : string) => {
-    setHostBookings((prev) => 
-      prev.map((booking) => 
-        booking.id === bookingId? {...booking, status: "cancelled"} : booking
-      )
-    );
+    setHostBookings((prev) => {
+      const updated = prev.map((booking) => 
+        booking.id === bookingId? {...booking, status: "cancelled"} as Booking : booking
+      );
+      const declined = updated.find(b => b.id === bookingId);
+      if (declined) saveStoredBooking(declined);
+      return updated;
+    });
     toast({
       title: "Booking Rejected",
       description: "Booking request has been declined",
